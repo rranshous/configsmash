@@ -1,0 +1,1 @@
+from csmash import ConfigSmasher
