@@ -20,6 +20,7 @@ class ConfigSmasher():
     def _config_to_dict(self,config):
         # { section: { key: value } }
         to_return = {}
+        to_return.update(config.defaults())
         for section in config.sections():
             to_return.setdefault(section,{}).update(dict(config.items(section)))
         return to_return
@@ -40,7 +41,7 @@ class ConfigSmasher():
 
         # we are going to update our
         # config with this new config
-        self.config.read(paths)
+        read = self.config.read(paths)
 
 if __name__ == '__main__':
     # parse our args
