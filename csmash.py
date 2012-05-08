@@ -1,5 +1,12 @@
 #!/usr/bin/python
+from functools import partial
 from ConfigParser import ConfigParser
+try:
+    from paste.deploy.converters import asbool, asint, aslist
+except ImportError, ex:
+    def _r(*args,**kwargs): raise ValueError('Paste not available')
+    asbool = asint = aslist = _r
+
 class ConfigSmasher():
     def __init__(self,to_smash=None):
         self.to_smash = to_smash # files / dir paths to look for ini's
@@ -15,7 +22,13 @@ class ConfigSmasher():
 
         # now that we have an updated config, we want
         # to return it as a dictionary
-        return self._config_to_dict(self.config)
+        config_dict = self._config_to_dict(self.config)
+
+        # update the values to be native types if we can
+        self._set_native_types(config_dict)
+
+        # and we're done
+        return config_dict
 
     def _config_to_dict(self,config):
         # { section: { key: value } }
@@ -42,6 +55,34 @@ class ConfigSmasher():
         # we are going to update our
         # config with this new config
         read = self.config.read(paths)
+
+    @classmethod
+    def _set_native_types(cls, config_dict):
+        """
+        goes through the config setting the values to native types
+        as it can. bool, int, list
+        """
+
+        assert isinstance(config_dict, dict), 'Must be mapping'
+        converters = [
+            (asint,None),
+            (asbool,None),
+            (partial(aslist,sep=';',strip=True), lambda v: ';' in v)
+        ]
+        for k, v in config_dict.items():
+            for converter, condition in converters:
+                try:
+                    if isinstance(v, dict):
+                        new_value = cls._set_native_types(v)
+                    elif condition and condition(v):
+                        new_value = converter(v)
+                        config_dict[k] = new_value
+                        break
+                except ValueError, ex:
+                    # not right
+                    pass
+        return config_dict
+
 
 if __name__ == '__main__':
     # parse our args
