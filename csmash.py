@@ -66,23 +66,24 @@ class ConfigSmasher():
 
         assert isinstance(config_dict, dict), 'Must be mapping'
         converters = [
-            (asint,None),
-            (asbool,None),
+            (asint,lambda v: v.isdigit()),
+            (asbool,lambda v: v.lower() in ('t','f','true','false')),
             (partial(aslist,sep=';',strip=True), lambda v: ';' in v)
         ]
         for k, v in config_dict.items():
+            new_value = None
             for converter, condition in converters:
+                if new_value is not None:
+                    continue
                 try:
                     if isinstance(v, dict):
                         new_value = cls._set_native_types(v)
                     elif condition and condition(v):
                         new_value = converter(v)
-                        config_dict[k] = new_value
-                        break
                     elif not condition:
                         new_value = converter(v)
+                    if new_value != None:
                         config_dict[k] = new_value
-                        break
                 except ValueError, ex:
                     # not right
                     pass
