@@ -4,6 +4,7 @@ from ConfigParser import ConfigParser
 try:
     from paste.deploy.converters import asbool, asint, aslist
 except ImportError, ex:
+    print 'Warning: native config values not available. Please install paste deploy'
     def _r(*args,**kwargs): raise ValueError('Paste not available')
     asbool = asint = aslist = _r
 
@@ -75,6 +76,10 @@ class ConfigSmasher():
                     if isinstance(v, dict):
                         new_value = cls._set_native_types(v)
                     elif condition and condition(v):
+                        new_value = converter(v)
+                        config_dict[k] = new_value
+                        break
+                    elif not condition:
                         new_value = converter(v)
                         config_dict[k] = new_value
                         break
