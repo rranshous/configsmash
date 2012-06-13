@@ -50,5 +50,10 @@ setup(
     tests_require=test_requirements,
     cmdclass={
         'test': ToxTest,
-    }
+    },
+    entry_points={
+        'console_scripts': [
+            'csmash = csmash:cli',
+        ]
+    },
 )

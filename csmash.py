@@ -100,8 +100,7 @@ class ConfigSmasher():
                     pass
         return config_dict
 
-
-if __name__ == '__main__':
+def cli():
     # parse our args
     from optparse import OptionParser
     option_parser = OptionParser()
@@ -126,3 +125,6 @@ if __name__ == '__main__':
         buffer = StringIO()
         smasher.config.write(buffer)
         print buffer.getvalue()
+
+if __name__ == '__main__':
+    cli()
