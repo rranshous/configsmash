@@ -29,7 +29,7 @@ class ToxTest(TestCommand):
 
 
 setup(
-    name="ConfigSmasher",
+    name="configsmash",
     version=csmash.__version__,
     author="Robby Ranshous",
     author_email="rranshous@gmail.com",
