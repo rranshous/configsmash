@@ -1,16 +1,25 @@
 #!/usr/bin/python
 from functools import partial
 from ConfigParser import ConfigParser
+
+version_info = (0, 0, 1)
+__version__ = '.'.join(map(str, version_info))
+version = __version__
+
 try:
     from paste.deploy.converters import asbool, asint, aslist
 except ImportError, ex:
-    print 'Warning: native config values not available. Please install paste deploy'
-    def _r(*args,**kwargs): raise ValueError('Paste not available')
+    print('Warning: native config values not available.'
+    ' Please install paste deploy')
+
+    def _r(*args, **kwargs):
+        raise ValueError('Paste not available')
     asbool = asint = aslist = _r
 
+
 class ConfigSmasher():
-    def __init__(self,to_smash=None):
-        self.to_smash = to_smash # files / dir paths to look for ini's
+    def __init__(self, to_smash=None):
+        self.to_smash = to_smash  # files / dir paths to look for ini's
         self.config = ConfigParser()
 
     def smash(self):
@@ -31,26 +40,28 @@ class ConfigSmasher():
         # and we're done
         return config_dict
 
-    def _config_to_dict(self,config):
+    def _config_to_dict(self, config):
         # { section: { key: value } }
         to_return = {}
         to_return.update(config.defaults())
         for section in config.sections():
-            to_return.setdefault(section,{}).update(dict(config.items(section)))
+            to_return.setdefault(section, {}).update(
+                dict(config.items(section))
+            )
         return to_return
 
-    def _expand(self,path):
+    def _expand(self, path):
         to_return = []
-        from os.path import isfile,isdir,abspath
+        from os.path import isfile, isdir, abspath
         path = abspath(path)
         if isdir(path):
             from glob import glob
-            to_return += map(abspath,glob('%s/*.ini' % path))
+            to_return += map(abspath, glob('%s/*.ini' % path))
         elif isfile(path):
             to_return.append(path)
         return to_return
 
-    def _update_config(self,paths):
+    def _update_config(self, paths):
         # paths can be a list or a single string
 
         # we are going to update our
@@ -66,9 +77,9 @@ class ConfigSmasher():
 
         assert isinstance(config_dict, dict), 'Must be mapping'
         converters = [
-            (asint,lambda v: v.isdigit()),
-            (asbool,lambda v: v.lower() in ('t','f','true','false')),
-            (partial(aslist,sep=';',strip=True), lambda v: ';' in v)
+            (asint, lambda v: v.isdigit()),
+            (asbool, lambda v: v.lower() in ('t', 'f', 'true', 'false')),
+            (partial(aslist, sep=';', strip=True), lambda v: ';' in v)
         ]
         for k, v in config_dict.items():
             new_value = None
@@ -82,20 +93,20 @@ class ConfigSmasher():
                         new_value = converter(v)
                     elif not condition:
                         new_value = converter(v)
-                    if new_value != None:
+                    if new_value is not None:
                         config_dict[k] = new_value
-                except ValueError, ex:
+                except ValueError:
                     # not right
                     pass
         return config_dict
 
-
-if __name__ == '__main__':
+def cli():
     # parse our args
     from optparse import OptionParser
     option_parser = OptionParser()
     option_parser.usage = "%prog [options] path path2 path3 ..."
-    option_parser.description = "Will cascade together multiple (python config) ini files. Paths can be directories or files."
+    option_parser.description = "Will cascade together multiple"\
+     + " (python config) ini files. Paths can be directories or files."
     option_parser.add_option('-j', '--json', dest='output_json', default=False,
                              help="output in json format", action="store_true")
     options, args = option_parser.parse_args()
@@ -114,3 +125,6 @@ if __name__ == '__main__':
         buffer = StringIO()
         smasher.config.write(buffer)
         print buffer.getvalue()
+
+if __name__ == '__main__':
+    cli()
